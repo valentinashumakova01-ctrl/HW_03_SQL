@@ -125,8 +125,8 @@ LEFT JOIN order_items oi ON o.order_id = oi.order_id
 ORDER BY total_revenue DESC NULLS LAST, order_count DESC NULLS LAST;
 
 -- GROUP BY возвращает по одной строке на каждого клиента
--- Оконные функции сохраняют все исхдные функции
--- В нашем случпе вывод данных юудет одинаковым, тк в customer_id значения не повторяются
+-- Оконные функции сохраняют все исходные функции
+-- В нашем случае вывод данных будет одинаковым, тк в customer_id значения не повторяются
 
 
 -- Имена и фамилии клиентов с топ-3 минимальной и топ-3 максимальной суммой транзакций за весь период
@@ -213,17 +213,18 @@ WITH ordered_orders AS (
     FROM orders o
     JOIN customer c ON o.customer_id = c.customer_id
 ),
-customer_max_gaps AS (
+customer_stats AS (
     SELECT 
         customer_id,
         first_name,
         last_name,
         job_title,
-        MAX(days_between) AS max_days_between_orders
+        MAX(days_between) AS max_days_between_orders,
+        COUNT(*) AS total_orders,
+        COUNT(days_between) AS calculated_intervals
     FROM ordered_orders
-    WHERE days_between IS NOT NULL
     GROUP BY customer_id, first_name, last_name, job_title
-    HAVING COUNT(*) >= 1  -- Убеждаемся, что у клиента минимум 2 заказа
+    HAVING COUNT(days_between) >= 1  -- Гарантирует минимум 2 заказа
 )
 SELECT 
     customer_id,
@@ -231,7 +232,7 @@ SELECT
     last_name,
     job_title,
     max_days_between_orders
-FROM customer_max_gaps
+FROM customer_stats
 ORDER BY max_days_between_orders DESC;
 
 
